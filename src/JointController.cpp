@@ -38,7 +38,7 @@ JointController::JointController(Manipulator *manipulator, QWidget *parent) :
 
     /* Initialise time for GUI refreshing */
     this->guiRefreshTimer = new QTimer(this);
-    connect(this->guiRefreshTimer, SIGNAL(timeout()), this, SLOT(on_gui_refresh_timeout()));
+    this->connect(this->guiRefreshTimer, SIGNAL(timeout()), this, SLOT(guiRefreshTimeout()));
 
     /* Refresh GUI to obtain current slider position */
     this->refreshGuiState();
@@ -67,6 +67,7 @@ void JointController::on_axis1Slider_valueChanged(int value)
     {
         this->manipulator->setAxis(1, value);
         this->ui->labelAxis1->setText(QString("%1").arg(value));
+        this->readOutAbsolutePosition();
     }
 }
 
@@ -76,6 +77,7 @@ void JointController::on_axis2Slider_valueChanged(int value)
     {
         this->manipulator->setAxis(2, value);
         this->ui->labelAxis2->setText(QString("%1").arg(value));
+        this->readOutAbsolutePosition();
     }
 }
 
@@ -85,6 +87,7 @@ void JointController::on_axis3Slider_valueChanged(int value)
     {
         this->manipulator->setAxis(3, value);
         this->ui->labelAxis3->setText(QString("%1").arg(value));
+        this->readOutAbsolutePosition();
     }
 }
 
@@ -94,6 +97,7 @@ void JointController::on_axis4Slider_valueChanged(int value)
     {
         this->manipulator->setAxis(4, value);
         this->ui->labelAxis4->setText(QString("%1").arg(value));
+        this->readOutAbsolutePosition();
     }
 }
 
@@ -103,6 +107,7 @@ void JointController::on_axis5Slider_valueChanged(int value)
     {
         this->manipulator->setAxis(5, value);
         this->ui->labelAxis5->setText(QString("%1").arg(value));
+        this->readOutAbsolutePosition();
     }
 }
 
@@ -132,19 +137,23 @@ void JointController::directControlEnabled(bool enabled)
     this->ui->axis5Slider->setEnabled(enabled);
 }
 
-void JointController::on_gui_refresh_timeout()
+void JointController::guiRefreshTimeout()
 {
     static QSlider *sliders[] = {this->ui->axis1Slider, this->ui->axis2Slider, this->ui->axis3Slider, this->ui->axis4Slider, this->ui->axis5Slider};
     static QLabel *labels[] = {this->ui->labelAxis1, this->ui->labelAxis2, this->ui->labelAxis3, this->ui->labelAxis4, this->ui->labelAxis5};
 
-    vector<int> currentAnglesDeg;
+    /* Refresh axis group */
+    VectorXi currentAnglesDeg(ARMJOINTS);
     this->manipulator->getSensedAxis(currentAnglesDeg);
 
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < ARMJOINTS; i++)
     {
         labels[i]->setText(QString("%1").arg(currentAnglesDeg[i]));
         sliders[i]->setValue(currentAnglesDeg[i]);
     }
+
+    /* Refresh tcp position */
+    this->readOutAbsolutePosition();
 
     /* If we reached the target position no more refresh is nessecary */
     if (this->manipulator->positionReached())
@@ -163,4 +172,18 @@ void JointController::refreshGuiState()
 
     /* Start timer for GUI refreshing */
     this->guiRefreshTimer->start(200);
+}
+
+void JointController::readOutAbsolutePosition()
+{
+    static QLineEdit *text[] = {this->ui->editX, this->ui->editY, this->ui->editZ, this->ui->editRoll, this->ui->editPitch, this->ui->editYaw};
+
+    VectorXd tcp;
+    this->manipulator->getSensedPosition(tcp);
+
+    for (int i = 0; i < 6; i++)
+    {
+        int factor = (i < 3) ? 100 : 1;
+        text[i]->setText(QString("%1").arg(tcp[i] * factor));
+    }
 }

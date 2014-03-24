@@ -14,11 +14,11 @@
 #define MANIPULATOR_H
 
 #include <youbot/YouBotManipulator.hpp>
-#include <vector>
-#include "ybparams.h"
+#include <eigen3/Eigen/Dense>
+#include "KinematicsSolver.h"
 
 using namespace youbot;
-using namespace std;
+using namespace Eigen;
 
 /**
  * Enumerator definition for stored positions
@@ -62,72 +62,132 @@ public:
     bool setPose(STORED_POSES pose);
 
     /**
+     * Sets a given pose to the robot.
+     * The coordinates defines the position of the tcp in world
+     * system. An external kinematics solver is used to calculate
+     * the angles for a given pose.
      *
+     * @param x X position of the tcp
+     * @param y Y position of the tcp
+     * @param z Z position of the tcp
+     * @param roll X rotatation of the tcp
+     * @param pitch Y rotatation of the tcp
+     * @param yaw Z rotatation of the tcp
+     * @return true if pose set successfully
      */
     bool setPose(double x, double y, double z, double roll, double pitch, double yaw);
 
     /**
+     * Sets the given target angles (radian) to the robot.
+     * The vector must have defined all 5 axis values.
+     * To set a single axis use overloaded function.
      *
+     * @param targetAnglesRad Vector of 5 axis angles
+     * @return true if angles set successfully
      */
-    bool setAxis(vector<double> &targetAnglesRad);
+    bool setAxis(VectorXd &targetAnglesRad);
 
     /**
+     * Sets the given target angles (degree) to the robot.
+     * The vector must have defined all 5 axis values.
+     * To set a single axis use overloaded function.
      *
+     * @param targetAnglesDeg Vector of 5 axis angles
+     * @return true if angles set successfully
      */
-    bool setAxis(vector<int> &targetAnglesDeg);
+    bool setAxis(VectorXi &targetAnglesDeg);
 
     /**
+     * Sets a single target angle (radian) to the robot.
      *
+     * @param jointIndex Index for joint which should be set (1 - 5)
+     * @param targetAngleRad Angle to set
+     * @return true if angle set successfully
      */
     bool setAxis(int jointIndex, double targetAngleRad);
 
     /**
+     * Sets a single target angle (degree) to the robot.
      *
+     * @param jointIndex Index for joint which should be set (1 - 5)
+     * @param targetAngleRad Angle to set
+     * @return true if angle set successfully
      */
     bool setAxis(int jointIndex, int targetAngleDeg);
 
     /**
+     * Reads out the actual axis positions of the robot in degree.
      *
+     * @param axisAngleDeg Vector which receives the readed values
      */
-    void getSensedAxis(vector<int> &axisAnglesDeg);
+    void getSensedAxis(VectorXi &axisAnglesDeg);
+
+    /**
+     * Reads out the actual axis positions of the robot in radian.
+     *
+     * @param axisAngleRad Vector which receives the readed values
+     */
+    virtual void getSensedAxis(VectorXd &axisAnglesRad);
 
     /**
      *
      */
-    void getSensedAxis(vector<double> &axisAnglesRad);
+    void getSensedPosition(VectorXd &tcp);
 
     /**
-     *
+     * Opens the gripper of the robot.
      */
-    void openGripper();
+    virtual void openGripper();
 
     /**
-     *
+     * Closes the gripper of the robot.
      */
-    void closeGripper();
+    virtual void closeGripper();
 
     /**
+     * Sets the spacing of the gripper manually.
      *
+     * @param distance Open space of the gripper in mm
+     * @return true if the gripper spacing set successfully
      */
-    bool setGripper(int distance);
+    virtual bool setGripper(int distance);
 
     /**
+     * Checks if the robot has reached the latest given position.
+     * The target space has a threshold of one degree.
      *
+     * @return true if the robot has reached the position
      */
-    bool positionReached();
+    virtual bool positionReached();
+
+protected:
+
+    /**
+     * Constructor:
+     * Creates an empty manipulator object for derivated classes, which doesn't
+     * connect to the arm e.g. an offline simulator.
+     */
+    Manipulator();
+
+    /**
+     * Finally sends a processed target angle to the robot.
+     *
+     * @param jointIndex
+     * @param targetAngle
+     * @return
+     */
+    virtual bool sendAxisCommandToManipulator(int jointIndex, JointAngleSetpoint &targetAngle);
+
+    /** Vector for latest desired position */
+    VectorXd latestDesiredPosition;
+
+    /** Member object for the kinematics solver */
+    KinematicsSolver *solver;
 
 private:
 
-    /** */
+    /** Member Object for the youBot API for arm communication */
     YouBotManipulator *kukaArm;
-
-    /** */
-    vector<double> latestDesiredPosition;
-
-    /**
-     *
-     */
-    bool sendAxisCommandToManipulator(int jointIndex, JointAngleSetpoint &targetAngle);
 };
 
 #endif // MANIPULATOR_H

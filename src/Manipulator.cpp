@@ -12,6 +12,12 @@
  ***************************************************************/
 #include <cmath>
 #include "Manipulator.h"
+#include "ybparams.h"
+
+Manipulator::Manipulator()
+{
+
+}
 
 Manipulator::Manipulator(const string &name, const string &path)
 {
@@ -22,10 +28,17 @@ Manipulator::Manipulator(const string &name, const string &path)
     this->kukaArm->calibrateManipulator();
 
     /* The arm has 5 angles and no desired position */
-    this->latestDesiredPosition.assign(ARMJOINTS, 0.);
+    this->latestDesiredPosition = VectorXd(ARMJOINTS);
 
     /* Drive arm to home position, to get definied value */
     this->setPose(HOME_POSITION);
+
+    /* Create a new kinematics solver */
+    this->solver = new KinematicsSolver();
+
+    JointVelocitySetpoint data;
+    data.angularVelocity = 0.001 * radian_per_second;
+    this->kukaArm->getArmJoint(1).setData(data);
 }
 
 bool Manipulator::setPose(STORED_POSES pose)
@@ -34,47 +47,38 @@ bool Manipulator::setPose(STORED_POSES pose)
 
     if (pose == HOME_POSITION)
     {
-        vector<int> axis;
-        axis.push_back(-168);
-        axis.push_back(-64);
-        axis.push_back(145);
-        axis.push_back(-101);
-        axis.push_back(-161);
+        VectorXi axis(ARMJOINTS);
+        axis << -168, -64, 145, -101, -161;
         poseSet = this->setAxis(axis);
     }
     else if (pose == CANDLE_POSITION)
     {
-        vector<double> axisRad(ARMJOINTS, 0.);
+        VectorXd axisRad(ARMJOINTS);
+        axisRad << 0, 0, 0, 0, 0;
         poseSet = this->setAxis(axisRad);
     }
-
     return poseSet;
 }
 
-bool Manipulator::setAxis(vector<double> &targetAnglesRad)
+bool Manipulator::setAxis(VectorXd &targetAnglesRad)
 {
-    bool validVector = targetAnglesRad.size() == ARMJOINTS;
+    bool validVector = true;
 
-    if (validVector)
+    for (int i = 1; i <= ARMJOINTS && validVector; i++)
     {
-        for (int i = 1; i <= ARMJOINTS && validVector; i++)
-        {
-            validVector = this->setAxis(i, targetAnglesRad[i - 1]);
-        }
+        validVector = this->setAxis(i, targetAnglesRad[i - 1]);
     }
+
     return validVector;
 }
 
-bool Manipulator::setAxis(vector<int> &targetAnglesDeg)
+bool Manipulator::setAxis(VectorXi &targetAnglesDeg)
 {
-    bool validVector = targetAnglesDeg.size() == ARMJOINTS;
+    bool validVector = true;
 
-    if (validVector)
+   for (int i = 1; i <= ARMJOINTS && validVector; i++)
     {
-        for (int i = 1; i <= ARMJOINTS && validVector; i++)
-        {
-            validVector = this->setAxis(i, targetAnglesDeg[i - 1]);
-        }
+        validVector = this->setAxis(i, targetAnglesDeg[i - 1]);
     }
     return validVector;
 }
@@ -96,50 +100,56 @@ bool Manipulator::setAxis(int jointIndex, int targetAngleDeg)
     return this->setAxis(jointIndex, targetAngleRad);
 }
 
-void Manipulator::getSensedAxis(vector<double> &axisAnglesRad)
+void Manipulator::getSensedAxis(VectorXd &axisAnglesRad)
 {
     vector<JointSensedAngle> data;
     this->kukaArm->getJointData(data);
-    axisAnglesRad.clear();
 
-    for (int i = 0; i < data.size(); i++)
+    for (int i = 0; i < ARMJOINTS; i++)
     {
         /* Convert kuka angle to angle (0 is centered) */
-        double angleRad = quantity_cast<double>(data[i].angle);
-        angleRad = (i == 2) ? angleRad + TOP_LIMIT_SD[i] : angleRad + BOTTOM_LIMIT_SD[i];
-
-        axisAnglesRad.push_back(angleRad);
+        axisAnglesRad[i] = quantity_cast<double>(data[i].angle);
+        axisAnglesRad[i] += (i == 2) ? TOP_LIMIT_SD[i] : BOTTOM_LIMIT_SD[i];
     }
 }
 
-void Manipulator::getSensedAxis(vector<int> &axisAnglesDeg)
+void Manipulator::getSensedAxis(VectorXi &axisAnglesDeg)
 {
     /* Get current angles in radians */
-    vector<double> axisAnglesRad;
+    VectorXd axisAnglesRad(ARMJOINTS);
     this->getSensedAxis(axisAnglesRad);
 
     /* Convert to degrees */
-    axisAnglesDeg.clear();
-    for (int i = 0; i < axisAnglesRad.size(); i++)
+    for (int i = 0; i < ARMJOINTS; i++)
     {
-        axisAnglesDeg.push_back((180. / M_PI) * axisAnglesRad[i]);
+        axisAnglesDeg[i] = ((180. / M_PI) * axisAnglesRad[i]);
     }
 }
 
-bool Manipulator::sendAxisCommandToManipulator(int JointIndex, JointAngleSetpoint &targetAngle)
+void Manipulator::getSensedPosition(VectorXd &tcp)
+{
+    /* Get current axis state */
+    VectorXd angles(ARMJOINTS);
+    this->getSensedAxis(angles);
+
+    /* Do forward transformation */
+    this->solver->forwardTransformation(angles, tcp);
+}
+
+bool Manipulator::sendAxisCommandToManipulator(int jointIndex, JointAngleSetpoint &targetAngle)
 {
     /* Check if target angle is valid */
-    bool validAngle = (targetAngle.angle > (BOTTOM_LIMIT_YB[JointIndex - 1] * radian)) && (targetAngle.angle < (TOP_LIMIT_YB[JointIndex - 1] * radian));
+    bool validAngle = (targetAngle.angle > (BOTTOM_LIMIT_YB[jointIndex - 1] * radian)) && (targetAngle.angle < (TOP_LIMIT_YB[jointIndex - 1] * radian));
 
     /* Check if joint index is valid */
-    bool validIndex = (JointIndex >= 1) && (JointIndex <= ARMJOINTS);
+    bool validIndex = (jointIndex >= 1) && (jointIndex <= ARMJOINTS);
 
     if (validAngle && validIndex)
     {
         try
         {
-            this->kukaArm->getArmJoint(JointIndex).setData(targetAngle);
-            this->latestDesiredPosition[JointIndex - 1] = quantity_cast<double>(targetAngle.angle);
+            this->kukaArm->getArmJoint(jointIndex).setData(targetAngle);
+            this->latestDesiredPosition[jointIndex - 1] = quantity_cast<double>(targetAngle.angle);
         }
         catch (std::exception e)
         {

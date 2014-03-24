@@ -13,9 +13,9 @@
 #ifndef JOINTCONTROLLER_H
 #define JOINTCONTROLLER_H
 
+#include "Manipulator.h"
 #include <QMainWindow>
 #include <QTimer>
-#include "Manipulator.h"
 
 namespace Ui {
 class JointController;
@@ -50,7 +50,7 @@ private slots:
 
     void on_openGripper_clicked();
 
-    void on_gui_refresh_timeout();
+    void guiRefreshTimeout();
 
 private:
     Ui::JointController *ui;
@@ -58,6 +58,7 @@ private:
     QTimer *guiRefreshTimer;
     void refreshGuiState();
     void directControlEnabled(bool enabled);
+    void readOutAbsolutePosition();
 };
 
 #endif // JOINTCONTROLLER_H

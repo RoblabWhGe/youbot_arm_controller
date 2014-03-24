@@ -390,7 +390,7 @@
    </widget>
    <widget class="QGroupBox" name="groupBox_3">
     <property name="enabled">
-     <bool>false</bool>
+     <bool>true</bool>
     </property>
     <property name="geometry">
      <rect>
@@ -401,9 +401,9 @@
      </rect>
     </property>
     <property name="title">
-     <string>Position Control (mm)</string>
+     <string>Position Control (cm)</string>
     </property>
-    <widget class="QLineEdit" name="lineEdit">
+    <widget class="QLineEdit" name="editX">
      <property name="geometry">
       <rect>
        <x>55</x>
@@ -413,7 +413,7 @@
       </rect>
      </property>
     </widget>
-    <widget class="QLineEdit" name="lineEdit_2">
+    <widget class="QLineEdit" name="editY">
      <property name="geometry">
       <rect>
        <x>55</x>
@@ -423,7 +423,7 @@
       </rect>
      </property>
     </widget>
-    <widget class="QLineEdit" name="lineEdit_3">
+    <widget class="QLineEdit" name="editZ">
      <property name="geometry">
       <rect>
        <x>55</x>
@@ -433,7 +433,7 @@
       </rect>
      </property>
     </widget>
-    <widget class="QLineEdit" name="lineEdit_4">
+    <widget class="QLineEdit" name="editRoll">
      <property name="geometry">
       <rect>
        <x>55</x>
@@ -443,7 +443,7 @@
       </rect>
      </property>
     </widget>
-    <widget class="QLineEdit" name="lineEdit_5">
+    <widget class="QLineEdit" name="editPitch">
      <property name="geometry">
       <rect>
        <x>55</x>
@@ -453,7 +453,7 @@
       </rect>
      </property>
     </widget>
-    <widget class="QLineEdit" name="lineEdit_6">
+    <widget class="QLineEdit" name="editYaw">
      <property name="geometry">
       <rect>
        <x>55</x>
@@ -542,6 +542,9 @@
      </property>
     </widget>
     <widget class="QPushButton" name="sendButton">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="geometry">
       <rect>
        <x>60</x>
@@ -555,6 +558,9 @@
      </property>
     </widget>
     <widget class="QPushButton" name="loadButton">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="geometry">
       <rect>
        <x>60</x>
@@ -568,6 +574,9 @@
      </property>
     </widget>
     <widget class="QPushButton" name="startButton">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="geometry">
       <rect>
        <x>60</x>

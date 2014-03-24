@@ -35,31 +35,24 @@ const double TOP_LIMIT_YB[5] = {5.84014,
 const double GRIPPER_LIMIT[2] = {0,
                                  0.023};
 
-/** Laengen des Youbot-Arms. */
-const double LENGTHS[5] = {0.075,
-                           0.033,
-                           0.155,
-                           0.135,
-                           0.218};
-
 /** DH-Parameter: Drehung um Z-Achse. */
 const double DH_THETA[5] = {0,
                             -M_PI_2,
                             0,
                             M_PI_2,
-                            M_PI_2};
+                            0};
 
 /** DH-Parameter: Verschiebung entlang Z-Achse. */
-const double DH_D[5] = {LENGTHS[0],
+const double DH_D[5] = {0.147,
                         0,
                         0,
                         0,
-                        LENGTHS[4]};
+                        0.171};
 
 /** DH-Parameter: Verschiebung entlang X-Achse. */
-const double DH_R[5] = {LENGTHS[1],
-                        LENGTHS[2],
-                        LENGTHS[3],
+const double DH_R[5] = {0.033,
+                        0.155,
+                        0.135,
                         0,
                         0};
 
