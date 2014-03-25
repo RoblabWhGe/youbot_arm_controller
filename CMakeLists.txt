@@ -16,6 +16,9 @@ include_directories(
 )
 link_directories(${CMAKE_BINARY_DIR}/youbot_driver/lib)
 
+# Load boost stuff
+find_package(Boost COMPONENTS filesystem system REQUIRED)
+
 # Define source files
 SET(SRC_FILES src/main.cpp src/JointController.cpp src/Manipulator.cpp src/OfflineManipulator.cpp)
 SET(KINEMTAIC_SRC src/KinematicsSolver.cpp)
