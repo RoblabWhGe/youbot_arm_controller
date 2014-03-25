@@ -1,6 +1,9 @@
 youbot_arm_controller
 =====================
 
+#Needed system dependencies
+* QT4
+* Boost
 
 ## Installation
 To compile the programm simply run the following commands:
