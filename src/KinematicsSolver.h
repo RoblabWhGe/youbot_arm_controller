@@ -42,8 +42,9 @@ public:
      * @param angles The actual axis values of the robot in radian.
      * @param tcp Vector which gives information about the posititon and
      *            orientation of the TCP (X, Y, Z, Roll, Pitch, Yaw)
+     * @return true if the tcp state estimated successfully
      */
-    void forwardTransformation(VectorXd &angles, VectorXd &tcp);
+    bool forwardTransformation(VectorXd &angles, VectorXd &tcp);
 
     /**
      * Calculates the robot state for a given TCP
@@ -52,8 +53,9 @@ public:
      * @param tcp The TCP Vector for the desired world position
      *            (X, Y, Z, Roll, Pitch, Yaw)
      * @param angles A vector for storing the calculated angles
+     * @return true if a possible state was calculated
      */
-    void inverseTransformation(VectorXd &tcp, VectorXd &angles);
+    bool inverseTransformation(VectorXd &tcp, VectorXd &angles);
 
 private:
 

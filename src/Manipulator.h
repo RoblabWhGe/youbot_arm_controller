@@ -67,15 +67,11 @@ public:
      * system. An external kinematics solver is used to calculate
      * the angles for a given pose.
      *
-     * @param x X position of the tcp
-     * @param y Y position of the tcp
-     * @param z Z position of the tcp
-     * @param roll X rotatation of the tcp
-     * @param pitch Y rotatation of the tcp
-     * @param yaw Z rotatation of the tcp
+     * @param tcp The TCP Vector for the desired world position
+     *            (X, Y, Z, Roll, Pitch, Yaw)
      * @return true if pose set successfully
      */
-    bool setPose(double x, double y, double z, double roll, double pitch, double yaw);
+    bool setPose(VectorXd &tcp);
 
     /**
      * Sets the given target angles (radian) to the robot.
@@ -130,9 +126,13 @@ public:
     virtual void getSensedAxis(VectorXd &axisAnglesRad);
 
     /**
+     * Reads out the actual pose of the TCP calculated by an external
+     * kinematics solver.
      *
+     * @param tcp Vector for storing the calculated pose
+     * @return true if the position was calculated successfully
      */
-    void getSensedPosition(VectorXd &tcp);
+    bool getSensedPosition(VectorXd &tcp);
 
     /**
      * Opens the gripper of the robot.

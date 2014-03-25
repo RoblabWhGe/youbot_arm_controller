@@ -60,6 +60,18 @@ bool Manipulator::setPose(STORED_POSES pose)
     return poseSet;
 }
 
+bool Manipulator::setPose(VectorXd &tcp)
+{
+    VectorXd angles;
+    bool success = this->solver->inverseTransformation(tcp, angles);
+
+    if (success)
+    {
+        this->setAxis(angles);
+    }
+    return success;
+}
+
 bool Manipulator::setAxis(VectorXd &targetAnglesRad)
 {
     bool validVector = true;
@@ -126,14 +138,14 @@ void Manipulator::getSensedAxis(VectorXi &axisAnglesDeg)
     }
 }
 
-void Manipulator::getSensedPosition(VectorXd &tcp)
+bool Manipulator::getSensedPosition(VectorXd &tcp)
 {
     /* Get current axis state */
     VectorXd angles(ARMJOINTS);
     this->getSensedAxis(angles);
 
     /* Do forward transformation */
-    this->solver->forwardTransformation(angles, tcp);
+    return this->solver->forwardTransformation(angles, tcp);
 }
 
 bool Manipulator::sendAxisCommandToManipulator(int jointIndex, JointAngleSetpoint &targetAngle)

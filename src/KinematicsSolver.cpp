@@ -19,7 +19,7 @@ KinematicsSolver::KinematicsSolver()
 
 }
 
-void KinematicsSolver::forwardTransformation(VectorXd &angles, VectorXd &tcp)
+bool KinematicsSolver::forwardTransformation(VectorXd &angles, VectorXd &tcp)
 {
     Matrix4f k[5];
     Matrix4f tcpMatrix;
@@ -49,6 +49,12 @@ void KinematicsSolver::forwardTransformation(VectorXd &angles, VectorXd &tcp)
         pitch *= -1;
     }
     tcp << tcpMatrix(0, 3), tcpMatrix(1, 3), tcpMatrix(2, 3), roll, pitch, 0;
+}
+
+bool KinematicsSolver::inverseTransformation(VectorXd &tcp, VectorXd &angles)
+{
+    /* Not implemented yet */
+    return false;
 }
 
 Matrix4f KinematicsSolver::dhTransformation(float theta, float d, float alpha, float r)

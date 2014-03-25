@@ -6,12 +6,16 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>573</width>
+    <width>747</width>
     <height>366</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>KUKA youBot Arm Controller</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="KukaLogo.qrc">
+    <normaloff>:/img/icon</normaloff>:/img/icon</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QGroupBox" name="groupBox">
@@ -543,7 +547,7 @@
     </widget>
     <widget class="QPushButton" name="sendButton">
      <property name="enabled">
-      <bool>false</bool>
+      <bool>true</bool>
      </property>
      <property name="geometry">
       <rect>
@@ -590,9 +594,30 @@
      </property>
     </widget>
    </widget>
+   <widget class="QLabel" name="label_13">
+    <property name="geometry">
+     <rect>
+      <x>560</x>
+      <y>40</y>
+      <width>166</width>
+      <height>281</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="pixmap">
+     <pixmap resource="KukaLogo.qrc">:/img/kuka</pixmap>
+    </property>
+    <property name="scaledContents">
+     <bool>true</bool>
+    </property>
+   </widget>
   </widget>
  </widget>
- <resources/>
+ <resources>
+  <include location="KukaLogo.qrc"/>
+ </resources>
  <connections/>
  <designerdata>
   <property name="gridDeltaX">

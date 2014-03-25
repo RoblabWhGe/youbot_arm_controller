@@ -1,0 +1,9 @@
+/**
+ * @mainpage youBot Arm Controller
+ *
+ *           To compile the program simply run the following commands.
+ *           - mkdir build
+ *           - cd build
+ *           - cmake ..
+ *           - make
+ */

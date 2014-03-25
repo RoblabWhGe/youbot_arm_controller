@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/img">
+        <file alias="kuka">KUKA.png</file>
+        <file alias="icon">Icon.png</file>
+    </qresource>
+</RCC>

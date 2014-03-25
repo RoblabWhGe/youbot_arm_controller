@@ -12,15 +12,24 @@
  ***************************************************************/
 #include "JointController.h"
 #include "ui_JointController.h"
+#include "OfflineManipulator.h"
+#include <QMessageBox>
 
 JointController::JointController(Manipulator *manipulator, QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::JointController)
 {
+    /* Init GUI */
     ui->setupUi(this);
 
     /* Store the given manipulator reference */
     this->manipulator = manipulator;
+
+    /* Check if we were in offline mode */
+    if (typeid(*manipulator) == typeid(OfflineManipulator))
+    {
+        this->setWindowTitle(this->windowTitle() + " (Offline mode)");
+    }
 
     /*Set minimum and maximum values to slider (based on robo freedom tests) */
     this->ui->axis1Slider->setMinimum(-168);
@@ -36,7 +45,7 @@ JointController::JointController(Manipulator *manipulator, QWidget *parent) :
     this->ui->gripperSlider->setMinimum(0);
     this->ui->gripperSlider->setMaximum(25);
 
-    /* Initialise time for GUI refreshing */
+    /* Initialise timer for GUI refreshing */
     this->guiRefreshTimer = new QTimer(this);
     this->connect(this->guiRefreshTimer, SIGNAL(timeout()), this, SLOT(guiRefreshTimeout()));
 
@@ -139,18 +148,8 @@ void JointController::directControlEnabled(bool enabled)
 
 void JointController::guiRefreshTimeout()
 {
-    static QSlider *sliders[] = {this->ui->axis1Slider, this->ui->axis2Slider, this->ui->axis3Slider, this->ui->axis4Slider, this->ui->axis5Slider};
-    static QLabel *labels[] = {this->ui->labelAxis1, this->ui->labelAxis2, this->ui->labelAxis3, this->ui->labelAxis4, this->ui->labelAxis5};
-
     /* Refresh axis group */
-    VectorXi currentAnglesDeg(ARMJOINTS);
-    this->manipulator->getSensedAxis(currentAnglesDeg);
-
-    for (int i = 0; i < ARMJOINTS; i++)
-    {
-        labels[i]->setText(QString("%1").arg(currentAnglesDeg[i]));
-        sliders[i]->setValue(currentAnglesDeg[i]);
-    }
+    this->readOutAxisPositions();
 
     /* Refresh tcp position */
     this->readOutAbsolutePosition();
@@ -179,11 +178,54 @@ void JointController::readOutAbsolutePosition()
     static QLineEdit *text[] = {this->ui->editX, this->ui->editY, this->ui->editZ, this->ui->editRoll, this->ui->editPitch, this->ui->editYaw};
 
     VectorXd tcp;
-    this->manipulator->getSensedPosition(tcp);
+    bool validData = this->manipulator->getSensedPosition(tcp);
 
     for (int i = 0; i < 6; i++)
     {
-        int factor = (i < 3) ? 100 : 1;
-        text[i]->setText(QString("%1").arg(tcp[i] * factor));
+        if (validData)
+        {
+            int factor = (i < 3) ? 100 : 1;
+            text[i]->setText(QString("%1").arg(tcp[i] * factor));
+        }
+        else
+        {
+            text[i]->setText(QString(""));
+        }
+    }
+}
+
+void JointController::readOutAxisPositions()
+{
+    static QSlider *sliders[] = {this->ui->axis1Slider, this->ui->axis2Slider, this->ui->axis3Slider, this->ui->axis4Slider, this->ui->axis5Slider};
+    static QLabel *labels[] = {this->ui->labelAxis1, this->ui->labelAxis2, this->ui->labelAxis3, this->ui->labelAxis4, this->ui->labelAxis5};
+
+    VectorXi currentAnglesDeg(ARMJOINTS);
+    this->manipulator->getSensedAxis(currentAnglesDeg);
+
+    for (int i = 0; i < ARMJOINTS; i++)
+    {
+        labels[i]->setText(QString("%1").arg(currentAnglesDeg[i]));
+        sliders[i]->setValue(currentAnglesDeg[i]);
+    }
+}
+
+void JointController::on_sendButton_clicked()
+{
+    VectorXd tcp(6);
+    tcp << this->ui->editX->text().toDouble(),
+           this->ui->editY->text().toDouble(),
+           this->ui->editZ->text().toDouble(),
+           this->ui->editRoll->text().toDouble(),
+           this->ui->editPitch->text().toDouble(),
+           this->ui->editYaw->text().toDouble();
+    bool success = this->manipulator->setPose(tcp);
+
+    if (success)
+    {
+        this->refreshGuiState();
+    }
+    else
+    {
+        QMessageBox::warning(this, "Kinematics solver", "Can't set position to youBot.", QMessageBox::Ok);
     }
 }

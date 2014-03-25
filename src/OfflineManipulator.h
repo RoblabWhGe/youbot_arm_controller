@@ -46,7 +46,6 @@ public:
      * The sensed value is always the desired value.
      *
      * @param axisAnglesRad Vector for receiving the sensed values
-     * @return true
      */
     void getSensedAxis(VectorXd &axisAnglesRad);
 
