@@ -1,6 +1,6 @@
 youbot_arm_controller
 =====================
-This GUI was developed to control the youBot arm. It provides a simple wrapper to the youBot API which just focussed the arm operations.
+This GUI was developed to control the youBot arm. It provides a simple wrapper to the youBot API which just focusses the arm operations.
 The main purpose is to provide students a simple human machine interface in which they can developed basis robotic algorithms and test their solutions.
 The GUI also provides an offline simulator thus you doesn't have to connect the manipulator all the time.
 
