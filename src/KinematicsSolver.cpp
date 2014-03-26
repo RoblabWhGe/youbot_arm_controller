@@ -49,6 +49,8 @@ bool KinematicsSolver::forwardTransformation(VectorXd &angles, VectorXd &tcp)
         pitch *= -1;
     }
     tcp << tcpMatrix(0, 3), tcpMatrix(1, 3), tcpMatrix(2, 3), roll, pitch, 0;
+
+    return true;
 }
 
 bool KinematicsSolver::inverseTransformation(VectorXd &tcp, VectorXd &angles)
