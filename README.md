@@ -9,8 +9,8 @@ The kinematics solver isn't implemented yet due to educational reasons. Feel fre
 ![gui_screenshot](http://s1.directupload.net/images/140326/zrrbxf7m.png "The arm controller interface in action")
 
 #Needed system dependencies
-* QT4
-* Boost
+Eigen, QT and Boost are required to ruild and run the software.
+* sudo apt-get install qt4-dev-tools libboost-dev libboost-thread-dev libboost-filesystem-dev libboost-regex-dev libeigen3-dev
 
 ## Installation
 To compile the programm simply run the following commands:
