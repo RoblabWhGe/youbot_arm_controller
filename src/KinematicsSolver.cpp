@@ -1,16 +1,25 @@
-/****************************************************************
+/*
+ * This file is part of youbot_arm_controller
  *
- * Copyright (c) 2014
- * All rights reserved.
- *
- * University of Applied Sciences Gelsenkirchen
- * Computer Science Department
- *
- * Author      : Stefan Wilkes
- * Contributors: Tom-M. Liebelt
- * Created     : 21.03.2014
- *
- ***************************************************************/
+ * Copyright (c)2014 by Robotics Lab 
+ * in the Computer Science Department of the 
+ * University of Applied Science Gelsenkirchen
+ * 
+ * Author: Stefan Wilkes <stefan.wilkes@studmail.w-hs.de>
+ *  
+ * The package is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ * 
+ * This package is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #include "KinematicsSolver.h"
 #include "ybparams.h"
 
@@ -49,8 +58,6 @@ bool KinematicsSolver::forwardTransformation(VectorXd &angles, VectorXd &tcp)
         pitch *= -1;
     }
     tcp << tcpMatrix(0, 3), tcpMatrix(1, 3), tcpMatrix(2, 3), roll, pitch, 0;
-
-    return true;
 }
 
 bool KinematicsSolver::inverseTransformation(VectorXd &tcp, VectorXd &angles)
@@ -93,3 +100,4 @@ Matrix4f KinematicsSolver::dhTransformation(float theta, float d, float alpha, f
 
     return rotZ * transZ * transX * rotX;
 }
+
