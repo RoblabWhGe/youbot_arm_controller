@@ -71,6 +71,17 @@ public:
 
 private:
 
+    /**
+     * Implementation of the DH Transformation.
+     *
+     * @param theta Theta to next frame
+     * @param d D to next frame
+     * @param alpha Alpha to next frame
+     * @param r R to next frame
+     * @return Matrix with position and orientation for the next frame
+     */
+    Matrix4f dhTransformation(float theta, float d, float alpha, float r);
+
 };
 
 #endif // KINEMATICSSOLVER_H
