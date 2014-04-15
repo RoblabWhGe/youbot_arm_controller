@@ -416,6 +416,9 @@
        <height>27</height>
       </rect>
      </property>
+     <property name="text">
+      <string>0</string>
+     </property>
     </widget>
     <widget class="QLineEdit" name="editY">
      <property name="geometry">
@@ -425,6 +428,9 @@
        <width>113</width>
        <height>27</height>
       </rect>
+     </property>
+     <property name="text">
+      <string>0</string>
      </property>
     </widget>
     <widget class="QLineEdit" name="editZ">
@@ -436,6 +442,9 @@
        <height>27</height>
       </rect>
      </property>
+     <property name="text">
+      <string>0</string>
+     </property>
     </widget>
     <widget class="QLineEdit" name="editRoll">
      <property name="geometry">
@@ -445,6 +454,9 @@
        <width>113</width>
        <height>27</height>
       </rect>
+     </property>
+     <property name="text">
+      <string>0</string>
      </property>
     </widget>
     <widget class="QLineEdit" name="editPitch">
@@ -456,6 +468,9 @@
        <height>27</height>
       </rect>
      </property>
+     <property name="text">
+      <string>0</string>
+     </property>
     </widget>
     <widget class="QLineEdit" name="editYaw">
      <property name="geometry">
@@ -465,6 +480,9 @@
        <width>113</width>
        <height>27</height>
       </rect>
+     </property>
+     <property name="text">
+      <string>0</string>
      </property>
     </widget>
     <widget class="QLabel" name="label_7">

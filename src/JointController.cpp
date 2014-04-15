@@ -195,7 +195,8 @@ void JointController::readOutAbsolutePosition()
         if (validData)
         {
             int factor = (i < 3) ? 100 : 1;
-            text[i]->setText(QString("%1").arg(tcp[i] * factor));
+            int precission = (i < 3) ? 2 : 4;
+            text[i]->setText(QString("%1").arg(tcp[i] * factor, 0, 'f', precission));
         }
         else
         {

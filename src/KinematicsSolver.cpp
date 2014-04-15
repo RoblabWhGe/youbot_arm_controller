@@ -41,23 +41,29 @@ bool KinematicsSolver::forwardTransformation(VectorXd &angles, VectorXd &tcp)
     }
     tcpMatrix = k[0] * k[1] * k[2] * k[3] * k[4];
 
-    /* Get X, Y, Z, Roll, Pitch from tcp matrix. Yaw is always 0 thus hardware restrictions */
-    double roll = (fabs(tcpMatrix(1,0)) >= 1) ? 0 : tcpMatrix(tcpMatrix(1,0)); // acos (l dot y)
-    double pitch = (fabs(tcpMatrix(0,2)) >= 1) ? 0 : tcpMatrix(tcpMatrix(0,2)); // acos (n dot x)
+    /* Get Roll, Pitch from tcp matrix. (http://de.wikipedia.org/wiki/Roll-Nick-Gier-Winkel#Berechnung_aus_Rotationsmatrix) */
+    double pitch = atan2(-tcpMatrix(2, 0), sqrt(pow(tcpMatrix(0, 0), 2) + pow(tcpMatrix(1, 0), 2)));
+    double yaw;
+    double roll;
 
-    /* Calculate sign of roll and pitch  */
-    double gamma = (tcpMatrix(2,2) <= -1) ? M_PI : ((tcpMatrix(2,2) >= 1) ? 0 : acos(tcpMatrix(2,2))); // acos (n dot z)
-    if (gamma <= M_PI_2)
+    /* Singulary cases */
+    if (fabs(pitch - M_PI_2) < 0.001)
     {
-        roll *= -1;
+        yaw = 0;
+        roll = atan2(tcpMatrix(0, 1), tcpMatrix(1, 1));
+    }
+    else if (fabs(pitch + M_PI_2) < 0.001)
+    {
+        yaw = 0;
+        roll = -atan2(tcpMatrix(0, 1), tcpMatrix(1, 1));
+    }
+    else
+    {
+        yaw = atan2(tcpMatrix(1, 0) / cos(pitch), tcpMatrix(0, 0) / cos(pitch));
+        roll = atan2(tcpMatrix(2, 1) / cos(pitch), tcpMatrix(2, 2) / cos(pitch));
     }
 
-    gamma = (tcpMatrix(1,1) <= -1) ? M_PI : ((tcpMatrix(1,1) >= 1) ? 0 : acos(tcpMatrix(1,1))); // acos (m dot y)
-    if (gamma <= M_PI_2)
-    {
-        pitch *= -1;
-    }
-    tcp << tcpMatrix(0, 3), tcpMatrix(1, 3), tcpMatrix(2, 3), roll, pitch, 0;
+    tcp << tcpMatrix(0, 3), tcpMatrix(1, 3), tcpMatrix(2, 3), roll, pitch, yaw;
 }
 
 bool KinematicsSolver::inverseTransformation(VectorXd &tcp, VectorXd &angles)

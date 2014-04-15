@@ -53,7 +53,6 @@ public:
      * @param tcp Vector which gives information about the posititon and
      *            orientation of the TCP (X, Y, Z, Roll, Pitch, Yaw)
      * @return true if the tcp state estimated successfully
-     * @todo You have to implement the functionality in the corresponding c++ file
      */
     bool forwardTransformation(VectorXd &angles, VectorXd &tcp);
 
@@ -65,7 +64,6 @@ public:
      *            (X, Y, Z, Roll, Pitch, Yaw)
      * @param angles A vector for storing the calculated angles
      * @return true if a possible state was calculated
-     * @todo You have to implement the functionality in the corresponding c++ file
      */
     bool inverseTransformation(VectorXd &tcp, VectorXd &angles);
 
