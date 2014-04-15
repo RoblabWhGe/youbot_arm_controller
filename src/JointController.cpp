@@ -223,9 +223,9 @@ void JointController::readOutAxisPositions()
 void JointController::on_sendButton_clicked()
 {
     VectorXd tcp(6);
-    tcp << this->ui->editX->text().toDouble(),
-           this->ui->editY->text().toDouble(),
-           this->ui->editZ->text().toDouble(),
+    tcp << this->ui->editX->text().toDouble() / 100.,
+           this->ui->editY->text().toDouble() / 100.,
+           this->ui->editZ->text().toDouble() / 100.,
            this->ui->editRoll->text().toDouble(),
            this->ui->editPitch->text().toDouble(),
            this->ui->editYaw->text().toDouble();

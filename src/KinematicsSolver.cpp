@@ -64,12 +64,15 @@ bool KinematicsSolver::forwardTransformation(VectorXd &angles, VectorXd &tcp)
     }
 
     tcp << tcpMatrix(0, 3), tcpMatrix(1, 3), tcpMatrix(2, 3), roll, pitch, yaw;
+
+    /* The forward transformation always succeed :) */
+    return true;
 }
 
 bool KinematicsSolver::inverseTransformation(VectorXd &tcp, VectorXd &angles)
 {
-    /* Not implemented yet */
-    return false;
+    /* Call internal solver (Numeric, geometric, ...) */
+    return this->inverseTransformationNumeric(tcp, angles);
 }
 
 Matrix4f KinematicsSolver::dhTransformation(float theta, float d, float alpha, float r)
@@ -105,5 +108,103 @@ Matrix4f KinematicsSolver::dhTransformation(float theta, float d, float alpha, f
             0, 0       , 0,         1;
 
     return rotZ * transZ * transX * rotX;
+}
+
+bool KinematicsSolver::inverseTransformationNumeric(VectorXd &tcp, VectorXd &angles)
+{
+    /* Start iteration with candle postition */
+    angles.resize(5);
+    angles << 0., 0., 0., 0., 0.;
+
+    /* Get distance for start position */
+    VectorXd tcpCurrent;
+    forwardTransformation(angles, tcpCurrent);
+    double minDistance = this->calculateDistanceBetweenTCPS(tcpCurrent, tcp);
+
+    /* Try to optimize till offset reaches 0.1 degree. Start iteration with 1 degree */
+    for (double offset = 0.0174; offset > 0.0017; offset /= 2.0)
+    {
+        bool optimisationFound = true;
+        while (optimisationFound)
+        {
+            bool optimisedAngle[5];
+
+            /* Find best angle for all axis */
+            for (int a = 0; a < 5; a++)
+            {
+                double distance;
+
+                /* Guess we'll find an optimisation */
+                optimisedAngle[a] = true;
+
+                /* Check left angle */
+                angles[a] -= offset;
+                this->forwardTransformation(angles, tcpCurrent);
+                distance = this->calculateDistanceBetweenTCPS(tcpCurrent, tcp);
+
+                /* Optimization? Otherwise check right angle  */
+                if (distance < minDistance && angles[a] > BOTTOM_LIMIT_SD[a])
+                {
+                    minDistance = distance;
+                }
+                else
+                {
+                    angles[a] += 2 * offset;
+                    this->forwardTransformation(angles, tcpCurrent);
+                    distance = this->calculateDistanceBetweenTCPS(tcpCurrent, tcp);
+
+                    /* Optimization? Otherwise revert modified angle */
+                    if (distance < minDistance && angles[a] < TOP_LIMIT_SD[a])
+                    {
+                        minDistance = distance;
+                    }
+                    else
+                    {
+                        angles[a] -= offset;
+                        optimisedAngle[a] = false;
+                    }
+                }
+            }
+            /* Check if we have found any optimisation */
+            optimisationFound = optimisedAngle[0] || optimisedAngle[1] ||
+                    optimisedAngle[2] || optimisedAngle[3] || optimisedAngle[4];
+        }
+    }
+
+    /* The numeric transformation always approximate a TCP pose */
+    return true;
+}
+
+double KinematicsSolver::calculateDistanceBetweenTCPS(VectorXd &tcp1, VectorXd &tcp2)
+{
+    double distance;
+
+    /* Ignore RPY and calculate euclydian distance between X, Y and Z */
+    distance = sqrt(pow((tcp1[0] - tcp2[0]), 2) +
+                    pow((tcp1[1] - tcp2[1]), 2) +
+                    pow((tcp1[2] - tcp2[2]), 2));
+
+    return distance;
+}
+
+void KinematicsSolver::convertTCPVectorToMatrix(VectorXd &tcpVector, Matrix4f &tcpMatrix)
+{
+    Matrix3f baseXYZ;
+    Matrix3f eulerZYX;
+
+    /* Convert TCP vector to TCP Matrix vial ZYX euler rotation */
+    baseXYZ << 1, 0, 0,
+               0, 1, 0,
+               0, 0, 1;
+
+    eulerZYX = AngleAxisf(tcpVector[5], Vector3f::UnitZ()) *
+               AngleAxisf(tcpVector[4], Vector3f::UnitY()) *
+               AngleAxisf(tcpVector[3], Vector3f::UnitX());
+    baseXYZ *= eulerZYX;
+
+    tcpMatrix << baseXYZ(0, 0), baseXYZ(0, 1), baseXYZ(0, 2), tcpVector[0],
+                 baseXYZ(1, 0), baseXYZ(1, 1), baseXYZ(1, 2), tcpVector[1],
+                 baseXYZ(2, 0), baseXYZ(2, 1), baseXYZ(2, 2), tcpVector[2],
+                 0,             0,             0,             1;
 }
 

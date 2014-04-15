@@ -58,7 +58,7 @@ public:
 
     /**
      * Calculates the robot state for a given TCP
-     * using the geometric inverse tranformation.
+     * using the inverse tranformation.
      *
      * @param tcp The TCP Vector for the desired world position
      *            (X, Y, Z, Roll, Pitch, Yaw)
@@ -80,6 +80,33 @@ private:
      */
     Matrix4f dhTransformation(float theta, float d, float alpha, float r);
 
+    /**
+     * Calculates the robot state for a given TCP
+     * using the geometric inverse tranformation.
+     *
+     * @param tcp The TCP vector for the desired position and orientation.
+     * @param angles A vector for storing the calculated angles
+     * @return true if a possible state was calculated
+     */
+    bool inverseTransformationNumeric(VectorXd &tcp, VectorXd &angles);
+
+    /**
+     * Calculates the distance between two given TCP vectors.
+     *
+     * @param tcp1 The first TCP vector
+     * @param tcp2 The second TCP vector
+     * @return The distance between given TCPs
+     */
+    double calculateDistanceBetweenTCPS(VectorXd &tcp1, VectorXd &tcp2);
+
+    /**
+     * Converts the given TCP vector to the corresponding TCP matrix
+     *
+     * @param tcpVector Vector representation of the TCP
+     * @param tcpMatric Matrix represantation of the TCP
+     * @todo Check if the function is really needed
+     */
+    void convertTCPVectorToMatrix(VectorXd &tcpVector, Matrix4f &tcpMatrix);
 };
 
 #endif // KINEMATICSSOLVER_H
