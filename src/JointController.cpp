@@ -163,6 +163,7 @@ void JointController::directControlEnabled(bool enabled)
     this->ui->axis3Slider->setEnabled(enabled);
     this->ui->axis4Slider->setEnabled(enabled);
     this->ui->axis5Slider->setEnabled(enabled);
+    this->ui->sendButton->setEnabled(enabled);
 }
 
 void JointController::guiRefreshTimeout()
@@ -262,20 +263,64 @@ void JointController::on_loadButton_clicked()
         {
            QTextStream poseStream(&poseFile);
            QString line = poseStream.readLine();
+           bool posMode = (line == QString("#POSITIONS"));
+           bool angleMode = (line == QString("#ANGLES"));
 
-           this->storedAnglePositions.clear();
+           if (posMode || angleMode)
+           {
+               /* Get file size for progress bar */
+               qint64 pos = poseStream.pos();
+               int file_size = poseStream.readAll().size();
+               poseStream.seek(pos);
 
-           if (line == QString("#POSITIONS"))
-           {
-              this->parsePositionStream(poseStream);
-           }
-           else if (line == QString("#ANGLES"))
-           {
-              this->parseAngleStram(poseStream);
+               /* Create progress bar */
+               QProgressDialog progress("Parsing positions...\nThis can take a while in case of transformations.",
+                            "Stop", 0, file_size, this);
+               progress.setWindowModality(Qt::WindowModal);
+
+               /* Clear previosly stored poses */
+               this->storedAnglePositions.clear();
+
+               /* Get vector size (5 for angles, 6 for positions) */
+               int vectorSize = (angleMode) ? 5 : 6;
+
+               while (!poseStream.atEnd() && !progress.wasCanceled())
+               {
+                   QString line = poseStream.readLine();
+                   QStringList positions = line.split(" ");
+                   VectorXd values(vectorSize);
+
+                   if (positions.size() == vectorSize)
+                   {
+                       for (int i = 0; i < vectorSize; i++)
+                       {
+                           values[i] = positions[i].toDouble();
+                       }
+                       if (posMode)
+                       {
+                           VectorXd angles;
+                           manipulator->prePlanMotion(values, angles);
+                           this->savePoseToInternalMemory(angles);
+                       }
+                       else
+                       {
+                           this->savePoseToInternalMemory(values);
+                       }
+                       progress.setValue(poseStream.pos());
+                   }
+                   else
+                   {
+                       this->storedAnglePositions.clear();
+                       QString ("Can't parse line %1 from input file").arg(this->storedAnglePositions.size() + 2);
+                       QMessageBox::warning(this, "Parsing error...", QString ("Can't parse line %1 from input file").arg(
+                                                this->storedAnglePositions.size() + 2), QMessageBox::Ok);
+                       progress.close();
+                   }
+               }
            }
            else
            {
-               QMessageBox::warning(this, "Open youBot pose file",
+               QMessageBox::warning(this, "Parsing error...",
                         "Can't parse input file\nMissing operation mode in first line.", QMessageBox::Ok);
            }
            poseFile.close();
@@ -286,74 +331,6 @@ void JointController::on_loadButton_clicked()
         }
     }
 }
-
-void JointController::parsePositionStream(QTextStream &positionStream)
-{
-    QProgressDialog progress("Parsing positions...\nThis can take a while in case of transformations.", "Cancel", 0, 100, this);
-    progress.setWindowModality(Qt::WindowModal);
-
-    qint64 pos = positionStream.pos();
-    int stream_size = positionStream.readAll().size();
-    positionStream.seek(pos);
-
-    while (!positionStream.atEnd())
-    {
-        QString line = positionStream.readLine();
-        QStringList positions = line.split(" ");
-        if (positions.size() == 6)
-        {
-            VectorXd position(6);
-            VectorXd angles;
-            position << positions[0].toDouble(),
-                        positions[1].toDouble(),
-                        positions[2].toDouble(),
-                        positions[3].toDouble(),
-                        positions[4].toDouble(),
-                        positions[5].toDouble();
-
-            manipulator->prePlanMotion(position, angles);
-            this->savePoseToInternalMemory(angles);
-        }
-        else
-        {
-            QMessageBox::warning(this, "Open youBot pose file", "Parsing error", QMessageBox::Ok);
-        }
-        progress.setValue((int)(positionStream.pos() * 100 / stream_size));
-    }
-}
-
-void JointController::parseAngleStram(QTextStream &angleStream)
-{
-    QProgressDialog progress("Parsing angles...", "Cancel", 0, 100, this);
-    progress.setWindowModality(Qt::WindowModal);
-
-    qint64 pos = angleStream.pos();
-    int stream_size = angleStream.readAll().size();
-    angleStream.seek(pos);
-
-    while (!angleStream.atEnd())
-    {
-        QString line = angleStream.readLine();
-        QStringList angles = line.split(" ");
-        if (angles.size() == 5)
-        {
-            VectorXd angleSet(5);
-            angleSet << angles[0].toDouble(),
-                        angles[1].toDouble(),
-                        angles[2].toDouble(),
-                        angles[3].toDouble(),
-                        angles[4].toDouble(),
-
-            this->savePoseToInternalMemory(angleSet);
-        }
-        else
-        {
-            QMessageBox::warning(this, "Open youBot pose file", "Parsing error", QMessageBox::Ok);
-        }
-        progress.setValue((int)(angleStream.pos() * 100 / stream_size));
-    }
-}
-
 
 void JointController::on_addPoseButton_clicked()
 {
@@ -405,10 +382,12 @@ void JointController::on_startButton_clicked()
         this->automaticModeTimer->start(200);
         this->automaticModeEnabled = true;
         this->ui->startButton->setText("Stop");
+        this->directControlEnabled(false);
     }
     else
     {
         this->automaticModeTimer->stop();
+        this->directControlEnabled(true);
         this->automaticModeEnabled = false;
         int result = QMessageBox::question(this, "Automatic mode stopped",
                 "Go back to first pose or continue from this pose next time?", QMessageBox::Yes, QMessageBox::No);
@@ -429,8 +408,14 @@ void JointController::on_startButton_clicked()
 
 void JointController::automaticModeTimeout()
 {
+    /* Refresh GUI position states */
+    this->readOutAbsolutePosition();
+    this->readOutAxisPositions();
+
+    /* Wait til robot reaches the latest pose */
     if (this->manipulator->positionReached())
     {
+        /* Set next pose or stop automatic mode if finished */
         if (this->automaticModePoseIndex < this->storedAnglePositions.size())
         {
             this->manipulator->setAxis(this->storedAnglePositions[this->automaticModePoseIndex]);
@@ -441,6 +426,7 @@ void JointController::automaticModeTimeout()
             this->automaticModeTimer->stop();
             this->ui->startButton->setText("Start");
             this->automaticModeEnabled = false;
+            this->directControlEnabled(true);
             this->automaticModePoseIndex = 0;
         }
         this->ui->poseLabel->setText(QString("Pose: %1 / %2").arg(

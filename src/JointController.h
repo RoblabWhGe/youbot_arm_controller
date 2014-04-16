@@ -140,12 +140,24 @@ private slots:
      */
     void on_loadButton_clicked();
 
+    /**
+     * Adds the actual robot pose to the internal memory.
+     */
     void on_addPoseButton_clicked();
 
+    /**
+     * Saves internal stored angle sets to a file (Angle format).
+     */
     void on_saveButton_clicked();
 
+    /**
+     * Start / Stops automatic control mode.
+     */
     void on_startButton_clicked();
 
+    /**
+     * Timer callback function for automatic control mode.
+     */
     void automaticModeTimeout();
 
 private:
@@ -161,10 +173,13 @@ private:
 
     vector<VectorXd> storedAnglePositions;
 
+    /** Memmber for automatic controlling. Index for the next pose */
     int automaticModePoseIndex;
 
+    /** Flag indicating wheather automatic mode is enabled */
     bool automaticModeEnabled;
 
+    /** Timer for automatic control mode */
     QTimer *automaticModeTimer;
 
     /**
@@ -191,10 +206,12 @@ private:
      */
     void readOutAxisPositions();
 
-    void parsePositionStream(QTextStream &positionStream);
-
-    void parseAngleStram(QTextStream &angleStream);
-
+    /**
+     * Stores the given angle set to internal memory for
+     * automatic controlling.
+     *
+     * @param angles The angle set which should be stored.
+     */
     void savePoseToInternalMemory(VectorXd &angles);
 };
 
