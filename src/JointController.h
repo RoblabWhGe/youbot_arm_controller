@@ -26,6 +26,7 @@
 #include "Manipulator.h"
 #include <QMainWindow>
 #include <QTimer>
+#include <QTextStream>
 
 namespace Ui
 {
@@ -134,6 +135,19 @@ private slots:
      */
     void guiRefreshTimeout();
 
+    /**
+     * Shows the file open dialog to load stored poses.
+     */
+    void on_loadButton_clicked();
+
+    void on_addPoseButton_clicked();
+
+    void on_saveButton_clicked();
+
+    void on_startButton_clicked();
+
+    void automaticModeTimeout();
+
 private:
 
     /** Member object for the GUI of the controller */
@@ -144,6 +158,14 @@ private:
 
     /** Timer for GUI refreshing */
     QTimer *guiRefreshTimer;
+
+    vector<VectorXd> storedAnglePositions;
+
+    int automaticModePoseIndex;
+
+    bool automaticModeEnabled;
+
+    QTimer *automaticModeTimer;
 
     /**
      * Refreshes the GUI.
@@ -168,6 +190,12 @@ private:
      * Reads out the calculated tcp position and sets the values to the position control fields.
      */
     void readOutAxisPositions();
+
+    void parsePositionStream(QTextStream &positionStream);
+
+    void parseAngleStram(QTextStream &angleStream);
+
+    void savePoseToInternalMemory(VectorXd &angles);
 };
 
 #endif // JOINTCONTROLLER_H

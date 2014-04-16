@@ -181,6 +181,11 @@ bool Manipulator::sendAxisCommandToManipulator(int jointIndex, JointAngleSetpoin
     return validAngle && validIndex;
 }
 
+bool Manipulator::prePlanMotion(VectorXd &tcp, VectorXd &angles)
+{
+    return this->solver->inverseTransformation(tcp, angles);
+}
+
 void Manipulator::openGripper()
 {
     this->kukaArm->getArmGripper().open();

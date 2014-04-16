@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>747</width>
-    <height>366</height>
+    <width>669</width>
+    <height>396</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -319,7 +319,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>255</y>
+      <y>280</y>
       <width>341</width>
       <height>96</height>
      </rect>
@@ -400,8 +400,8 @@
      <rect>
       <x>370</x>
       <y>10</y>
-      <width>191</width>
-      <height>341</height>
+      <width>176</width>
+      <height>276</height>
      </rect>
     </property>
     <property name="title">
@@ -569,9 +569,9 @@
      </property>
      <property name="geometry">
       <rect>
-       <x>60</x>
+       <x>15</x>
        <y>235</y>
-       <width>106</width>
+       <width>151</width>
        <height>27</height>
       </rect>
      </property>
@@ -579,46 +579,14 @@
       <string>Send position</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="loadButton">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="geometry">
-      <rect>
-       <x>60</x>
-       <y>270</y>
-       <width>105</width>
-       <height>27</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Load file</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="startButton">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="geometry">
-      <rect>
-       <x>60</x>
-       <y>305</y>
-       <width>105</width>
-       <height>27</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Start</string>
-     </property>
-    </widget>
    </widget>
    <widget class="QLabel" name="label_13">
     <property name="geometry">
      <rect>
-      <x>560</x>
-      <y>40</y>
-      <width>166</width>
-      <height>281</height>
+      <x>545</x>
+      <y>65</y>
+      <width>131</width>
+      <height>211</height>
      </rect>
     </property>
     <property name="text">
@@ -630,6 +598,105 @@
     <property name="scaledContents">
      <bool>true</bool>
     </property>
+   </widget>
+   <widget class="QGroupBox" name="groupBox_4">
+    <property name="geometry">
+     <rect>
+      <x>370</x>
+      <y>280</y>
+      <width>286</width>
+      <height>226</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Automatic Control</string>
+    </property>
+    <widget class="QPushButton" name="loadButton">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>15</x>
+       <y>25</y>
+       <width>105</width>
+       <height>27</height>
+      </rect>
+     </property>
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Loads a given pose file. If the poses are positions the inverse kinematic is used to transform the poses to angle sets and store them into the internal memory&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="text">
+      <string>Load file</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="saveButton">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>130</x>
+       <y>25</y>
+       <width>105</width>
+       <height>27</height>
+      </rect>
+     </property>
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Saves the poses (angle sets) from the internal memory to a file&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="text">
+      <string>Save file</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="startButton">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>130</x>
+       <y>60</y>
+       <width>105</width>
+       <height>27</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Start</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="poseLabel">
+     <property name="geometry">
+      <rect>
+       <x>15</x>
+       <y>90</y>
+       <width>221</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Pose: 0 / 0</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="addPoseButton">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>15</x>
+       <y>60</y>
+       <width>105</width>
+       <height>27</height>
+      </rect>
+     </property>
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add the current state of the robot (angle set) to the internal pose memory&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="text">
+      <string>Add pose</string>
+     </property>
+    </widget>
    </widget>
   </widget>
  </widget>

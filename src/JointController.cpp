@@ -24,6 +24,10 @@
 #include "ui_JointController.h"
 #include "OfflineManipulator.h"
 #include <QMessageBox>
+#include <QFileDialog>
+#include <QProgressDialog>
+#include <QApplication>
+#include <QThread>
 
 JointController::JointController(Manipulator *manipulator, QWidget *parent) :
     QMainWindow(parent),
@@ -58,6 +62,11 @@ JointController::JointController(Manipulator *manipulator, QWidget *parent) :
     /* Initialise timer for GUI refreshing */
     this->guiRefreshTimer = new QTimer(this);
     this->connect(this->guiRefreshTimer, SIGNAL(timeout()), this, SLOT(guiRefreshTimeout()));
+
+    /* Initialise timer for automatic pose controlling */
+    this->automaticModeTimer = new QTimer(this);
+    this->connect(this->automaticModeTimer, SIGNAL(timeout()), this, SLOT(automaticModeTimeout()));
+    this->automaticModePoseIndex = 0;
 
     /* Refresh GUI to obtain current slider position */
     this->refreshGuiState();
@@ -238,5 +247,203 @@ void JointController::on_sendButton_clicked()
     else
     {
         QMessageBox::warning(this, "Kinematics solver", "Can't set position to youBot.", QMessageBox::Ok);
+    }
+}
+
+void JointController::on_loadButton_clicked()
+{
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Open youBot pose file"), "", tr("*.ybposes"));
+
+    if (!fileName.isEmpty())
+    {
+        QFile poseFile(fileName);
+
+        if (poseFile.open(QFile::ReadOnly))
+        {
+           QTextStream poseStream(&poseFile);
+           QString line = poseStream.readLine();
+
+           this->storedAnglePositions.clear();
+
+           if (line == QString("#POSITIONS"))
+           {
+              this->parsePositionStream(poseStream);
+           }
+           else if (line == QString("#ANGLES"))
+           {
+              this->parseAngleStram(poseStream);
+           }
+           else
+           {
+               QMessageBox::warning(this, "Open youBot pose file",
+                        "Can't parse input file\nMissing operation mode in first line.", QMessageBox::Ok);
+           }
+           poseFile.close();
+        }
+        else
+        {
+            QMessageBox::warning(this, "Open youBot pose file", "Can't open input file", QMessageBox::Ok);
+        }
+    }
+}
+
+void JointController::parsePositionStream(QTextStream &positionStream)
+{
+    QProgressDialog progress("Parsing positions...\nThis can take a while in case of transformations.", "Cancel", 0, 100, this);
+    progress.setWindowModality(Qt::WindowModal);
+
+    qint64 pos = positionStream.pos();
+    int stream_size = positionStream.readAll().size();
+    positionStream.seek(pos);
+
+    while (!positionStream.atEnd())
+    {
+        QString line = positionStream.readLine();
+        QStringList positions = line.split(" ");
+        if (positions.size() == 6)
+        {
+            VectorXd position(6);
+            VectorXd angles;
+            position << positions[0].toDouble(),
+                        positions[1].toDouble(),
+                        positions[2].toDouble(),
+                        positions[3].toDouble(),
+                        positions[4].toDouble(),
+                        positions[5].toDouble();
+
+            manipulator->prePlanMotion(position, angles);
+            this->savePoseToInternalMemory(angles);
+        }
+        else
+        {
+            QMessageBox::warning(this, "Open youBot pose file", "Parsing error", QMessageBox::Ok);
+        }
+        progress.setValue((int)(positionStream.pos() * 100 / stream_size));
+    }
+}
+
+void JointController::parseAngleStram(QTextStream &angleStream)
+{
+    QProgressDialog progress("Parsing angles...", "Cancel", 0, 100, this);
+    progress.setWindowModality(Qt::WindowModal);
+
+    qint64 pos = angleStream.pos();
+    int stream_size = angleStream.readAll().size();
+    angleStream.seek(pos);
+
+    while (!angleStream.atEnd())
+    {
+        QString line = angleStream.readLine();
+        QStringList angles = line.split(" ");
+        if (angles.size() == 5)
+        {
+            VectorXd angleSet(5);
+            angleSet << angles[0].toDouble(),
+                        angles[1].toDouble(),
+                        angles[2].toDouble(),
+                        angles[3].toDouble(),
+                        angles[4].toDouble(),
+
+            this->savePoseToInternalMemory(angleSet);
+        }
+        else
+        {
+            QMessageBox::warning(this, "Open youBot pose file", "Parsing error", QMessageBox::Ok);
+        }
+        progress.setValue((int)(angleStream.pos() * 100 / stream_size));
+    }
+}
+
+
+void JointController::on_addPoseButton_clicked()
+{
+    VectorXd axisState;
+    this->manipulator->getSensedAxis(axisState);
+    this->savePoseToInternalMemory(axisState);
+}
+
+void JointController::on_saveButton_clicked()
+{
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save youBot pose file"), "", tr("*.ybposes"));
+
+    if (!fileName.isEmpty())
+    {
+        QFile poseFile(fileName);
+
+        if (poseFile.open(QFile::WriteOnly))
+        {
+            QTextStream poseStream(&poseFile);
+            poseStream << "#ANGLES\n";
+
+            for (int i = 0; i < this->storedAnglePositions.size(); i++)
+            {
+                VectorXd angle = this->storedAnglePositions[i];
+                poseStream << QString("%1 %2 %3 %4 %5\n").arg(
+                    angle[0]).arg(angle[1]).arg(angle[2]).arg(angle[3]).arg(angle[4]);
+            }
+            poseFile.close();
+        }
+        else
+        {
+            QMessageBox::warning(this, "Save youBot pose file", "Can't write to input file", QMessageBox::Ok);
+        }
+    }
+}
+
+void JointController::savePoseToInternalMemory(VectorXd &angles)
+{
+    this->storedAnglePositions.push_back(angles);
+    this->ui->poseLabel->setText(QString("Pose: %1 / %2").arg(
+                this->automaticModePoseIndex).arg(this->storedAnglePositions.size()));
+    this->ui->startButton->setEnabled(true);
+}
+
+void JointController::on_startButton_clicked()
+{
+    if (!this->automaticModeEnabled)
+    {
+        this->automaticModeTimer->start(200);
+        this->automaticModeEnabled = true;
+        this->ui->startButton->setText("Stop");
+    }
+    else
+    {
+        this->automaticModeTimer->stop();
+        this->automaticModeEnabled = false;
+        int result = QMessageBox::question(this, "Automatic mode stopped",
+                "Go back to first pose or continue from this pose next time?", QMessageBox::Yes, QMessageBox::No);
+
+        if (result == QMessageBox::No)
+        {
+            this->ui->startButton->setText("Pause");
+        }
+        else
+        {
+            this->ui->startButton->setText("Start");
+            this->automaticModePoseIndex = 0;
+            this->ui->poseLabel->setText(QString("Pose: %1 / %2").arg(
+                        this->automaticModePoseIndex).arg(this->storedAnglePositions.size()));
+        }
+    }
+}
+
+void JointController::automaticModeTimeout()
+{
+    if (this->manipulator->positionReached())
+    {
+        if (this->automaticModePoseIndex < this->storedAnglePositions.size())
+        {
+            this->manipulator->setAxis(this->storedAnglePositions[this->automaticModePoseIndex]);
+            this->automaticModePoseIndex++;
+        }
+        else
+        {
+            this->automaticModeTimer->stop();
+            this->ui->startButton->setText("Start");
+            this->automaticModeEnabled = false;
+            this->automaticModePoseIndex = 0;
+        }
+        this->ui->poseLabel->setText(QString("Pose: %1 / %2").arg(
+                    this->automaticModePoseIndex).arg(this->storedAnglePositions.size()));
     }
 }

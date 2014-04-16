@@ -145,6 +145,22 @@ public:
     bool getSensedPosition(VectorXd &tcp);
 
     /**
+     * Pre plans the motion for a given TCP.
+     *
+     * An external kinematics solver is used to calculate
+     * the angles for a given pose.
+     *
+     * No command is send to the robot. This is only for
+     * pre calculation of large position commands.
+     *
+     * @param tcp The TCP Vector for the desired world position
+     *            (X, Y, Z, Roll, Pitch, Yaw)
+     * @param angles The calculated angles which would be sent to the robot.
+     * @return true if pose set successfully
+     */
+    bool prePlanMotion(VectorXd &tcp, VectorXd &angles);
+
+    /**
      * Opens the gripper of the robot.
      */
     virtual void openGripper();
