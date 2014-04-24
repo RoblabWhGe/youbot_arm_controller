@@ -60,30 +60,30 @@ const double GRIPPER_LIMIT[2] = {0,
 
 /** DH-Parameter: Theta */
 const double DH_THETA[5] = {0,
-                            -M_PI_2,
                             0,
-                            M_PI_2,
+                            0,
+                            0,
                             0};
 
 /** DH-Parameter: D */
-const double DH_D[5] = {0.147,
+const double DH_D[5] = {0,
                         0,
                         0,
                         0,
-                        0.171};
+                        0};
 
 /** DH-Parameter: R */
-const double DH_R[5] = {0.033,
-                        0.155,
-                        0.135,
+const double DH_R[5] = {0,
+                        0,
+                        0,
                         0,
                         0};
 
 /** DH-Parameter: Alpha */
-const double DH_ALPHA[5] = {-M_PI_2,
+const double DH_ALPHA[5] = {0,
                             0,
                             0,
-                            M_PI_2,
+                            0,
                             0};
 
 #endif // YBPARAMS_H
