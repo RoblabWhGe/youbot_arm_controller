@@ -120,6 +120,7 @@ bool KinematicsSolver::inverseTransformationNumeric(VectorXd &tcp, VectorXd &ang
     VectorXd tcpCurrent;
     forwardTransformation(angles, tcpCurrent);
     double minDistance = this->calculateDistanceBetweenTCPS(tcpCurrent, tcp);
+    double minAngleError = this->calculateAngleErrorBetweenTCPS(tcpCurrent, tcp);
 
     /* Try to optimize till offset reaches 0.1 degree. Start iteration with 1 degree */
     for (double offset = 0.0174; offset > 0.0017; offset /= 2.0)
@@ -133,6 +134,7 @@ bool KinematicsSolver::inverseTransformationNumeric(VectorXd &tcp, VectorXd &ang
             for (int a = 0; a < 5; a++)
             {
                 double distance;
+                double angleError;
 
                 /* Guess we'll find an optimisation */
                 optimisedAngle[a] = true;
@@ -141,22 +143,32 @@ bool KinematicsSolver::inverseTransformationNumeric(VectorXd &tcp, VectorXd &ang
                 angles[a] -= offset;
                 this->forwardTransformation(angles, tcpCurrent);
                 distance = this->calculateDistanceBetweenTCPS(tcpCurrent, tcp);
+                angleError = this->calculateAngleErrorBetweenTCPS(tcpCurrent, tcp);
 
                 /* Optimization? Otherwise check right angle  */
                 if (distance < minDistance && angles[a] > BOTTOM_LIMIT_SD[a])
                 {
                     minDistance = distance;
                 }
+                else if (angleError < minAngleError && angles[a] > BOTTOM_LIMIT_SD[a])
+                {
+                    minAngleError = angleError;
+                }
                 else
                 {
                     angles[a] += 2 * offset;
                     this->forwardTransformation(angles, tcpCurrent);
                     distance = this->calculateDistanceBetweenTCPS(tcpCurrent, tcp);
+                    angleError = this->calculateAngleErrorBetweenTCPS(tcpCurrent, tcp);
 
                     /* Optimization? Otherwise revert modified angle */
                     if (distance < minDistance && angles[a] < TOP_LIMIT_SD[a])
                     {
                         minDistance = distance;
+                    }
+                    else if (angleError < minAngleError && angles[a] < TOP_LIMIT_SD[a])
+                    {
+                        minAngleError = angleError;
                     }
                     else
                     {
@@ -179,7 +191,7 @@ double KinematicsSolver::calculateDistanceBetweenTCPS(VectorXd &tcp1, VectorXd &
 {
     double distance;
 
-    /* Ignore RPY and calculate euclydian distance between X, Y and Z */
+    /* Calculate euclydian distance between X, Y and Z of the TCP center */
     distance = sqrt(pow((tcp1[0] - tcp2[0]), 2) +
                     pow((tcp1[1] - tcp2[1]), 2) +
                     pow((tcp1[2] - tcp2[2]), 2));
@@ -187,7 +199,16 @@ double KinematicsSolver::calculateDistanceBetweenTCPS(VectorXd &tcp1, VectorXd &
     return distance;
 }
 
-void KinematicsSolver::convertTCPVectorToMatrix(VectorXd &tcpVector, Matrix4f &tcpMatrix)
+double KinematicsSolver::calculateAngleErrorBetweenTCPS(VectorXd &tcp1, VectorXd &tcp2)
+{
+    double rollError = fabs(tcp1[3] - tcp2[3]);
+    double pitchError = fabs(tcp1[4] - tcp2[4]);
+    double yawError = fabs(tcp1[5] - tcp2[5]);
+
+    return rollError + pitchError + yawError;
+}
+
+void KinematicsSolver::convertTCPVectorToRotationMatrix(VectorXd &tcpVector, Matrix3f &tcpRotation)
 {
     Matrix3f baseXYZ;
     Matrix3f eulerZYX;
@@ -200,11 +221,6 @@ void KinematicsSolver::convertTCPVectorToMatrix(VectorXd &tcpVector, Matrix4f &t
     eulerZYX = AngleAxisf(tcpVector[5], Vector3f::UnitZ()) *
                AngleAxisf(tcpVector[4], Vector3f::UnitY()) *
                AngleAxisf(tcpVector[3], Vector3f::UnitX());
-    baseXYZ *= eulerZYX;
-
-    tcpMatrix << baseXYZ(0, 0), baseXYZ(0, 1), baseXYZ(0, 2), tcpVector[0],
-                 baseXYZ(1, 0), baseXYZ(1, 1), baseXYZ(1, 2), tcpVector[1],
-                 baseXYZ(2, 0), baseXYZ(2, 1), baseXYZ(2, 2), tcpVector[2],
-                 0,             0,             0,             1;
+    tcpRotation = baseXYZ * eulerZYX;
 }
 

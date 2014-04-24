@@ -100,13 +100,22 @@ private:
     double calculateDistanceBetweenTCPS(VectorXd &tcp1, VectorXd &tcp2);
 
     /**
+     * Calculates the angle error between two given TCP vectors.
+     *
+     * @param tcp1 The first TCP vector
+     * @param tcp2 The second TCP vector
+     * @return Sum of absolute errors in RPY<
+     */
+    double calculateAngleErrorBetweenTCPS(VectorXd &tcp1, VectorXd &tcp2);
+
+    /**
      * Converts the given TCP vector to the corresponding TCP matrix
      *
      * @param tcpVector Vector representation of the TCP
-     * @param tcpMatric Matrix represantation of the TCP
+     * @param tcpRotation Matrix represantation of the orientation of the TCP
      * @todo Check if the function is really needed
      */
-    void convertTCPVectorToMatrix(VectorXd &tcpVector, Matrix4f &tcpMatrix);
+    void convertTCPVectorToRotationMatrix(VectorXd &tcpVector, Matrix3f &tcpRotation);
 };
 
 #endif // KINEMATICSSOLVER_H
