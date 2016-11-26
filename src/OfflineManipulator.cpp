@@ -27,6 +27,7 @@ OfflineManipulator::OfflineManipulator()
 {
     /* Same as for the real manipulator without arm initialisation */
     this->latestDesiredPosition = VectorXd(ARMJOINTS);
+    this->solver = new KinematicsSolver();
 }
 
 void OfflineManipulator::getSensedAxis(VectorXd &axisAnglesRad)
