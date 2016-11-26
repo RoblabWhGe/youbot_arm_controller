@@ -334,7 +334,7 @@ void JointController::on_loadButton_clicked()
 
 void JointController::on_addPoseButton_clicked()
 {
-    VectorXd axisState;
+    VectorXd axisState(5);
     this->manipulator->getSensedAxis(axisState);
     this->savePoseToInternalMemory(axisState);
 }
